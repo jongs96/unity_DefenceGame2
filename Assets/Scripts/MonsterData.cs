@@ -7,6 +7,8 @@ public class MonsterData : ScriptableObject
 {
     [SerializeField] float MaxHp = 100;
     [SerializeField] float MoveSpeed = 1.0f;
+    [SerializeField] int gold = 0;
     public float HP { get => MaxHp; }
     public float Speed { get => MoveSpeed; }
+    public int Gold { get => gold; }
 }

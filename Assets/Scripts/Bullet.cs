@@ -1,26 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Bullet : MonoBehaviour
 {
     public GameObject hitEffect = null;
     [SerializeField] float moveSpeed = 10.0f;
-    // Start is called before the first frame update
-    void Start()
+    protected UnityAction hitAction = null;
+    public void OnFire(Transform target, TowerStat data)
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
-    public void OnFire(Transform target, float dmg)
-    {
-        StartCoroutine(Moving(target, dmg));
+        StartCoroutine(Moving(target, data.Damage));
     }
 
     IEnumerator Moving(Transform target, float dmg)
@@ -40,9 +30,13 @@ public class Bullet : MonoBehaviour
             transform.Translate(dir * delta, Space.World);
             yield return null;
         }
-        transform.position = target.position;
-        target.parent.GetComponent<IBattle>()?.OnDamage(dmg);
-        Destroy(gameObject);
-        Instantiate(hitEffect, transform.position, Quaternion.identity);
+        if (target != null)
+        {
+            transform.position = target.position;
+            target.parent.GetComponent<IBattle>()?.OnDamage(dmg);
+            Instantiate(hitEffect, transform.position, hitEffect.transform.localRotation);
+            hitAction?.Invoke();
+        }
+        Destroy(gameObject);        
     }
 }

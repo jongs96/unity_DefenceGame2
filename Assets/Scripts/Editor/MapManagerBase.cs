@@ -8,7 +8,10 @@ public class MapManagerBase : Editor
 {
     private void OnEnable()
     {
-        (target as MapManager).CreateMap();
+        if (Application.isEditor)
+        {
+            (target as MapManager).CreateMap();
+        }
     }
 
     public override void OnInspectorGUI()

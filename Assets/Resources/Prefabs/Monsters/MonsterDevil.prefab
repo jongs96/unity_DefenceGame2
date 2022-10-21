@@ -230,7 +230,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9215329218336142979}
   - component: {fileID: 9215329218336142978}
-  - component: {fileID: 172491121929381023}
+  - component: {fileID: 7746018201497037345}
   - component: {fileID: 975639069507302881}
   - component: {fileID: 5436724071773490188}
   m_Layer: 7
@@ -271,9 +271,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 1
   rotSpeed: 360
+  myStat: {fileID: 7746018201497037345}
   myHitPos: {fileID: 5296850058637481958}
-  myStat: {fileID: 172491121929381023}
---- !u!114 &172491121929381023
+--- !u!114 &7746018201497037345
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -282,12 +282,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 9215329218336142980}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 97f599cb7a838db4b86a61f7247f4234, type: 3}
+  m_Script: {fileID: 11500000, guid: b1f6198589d97e84db7a81a550110d35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  myData: {fileID: 11400000, guid: 143c4867230f2d44592455025960a7ee, type: 2}
-  <CurHP>k__BackingField: 0
-  <MoveSpeed>k__BackingField: 0
+  myData: {fileID: 11400000, guid: 8737e912d5514e842a3a06c0af683ff4, type: 2}
 --- !u!136 &975639069507302881
 CapsuleCollider:
   m_ObjectHideFlags: 0

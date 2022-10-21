@@ -9,17 +9,37 @@ public class Tile : MonoBehaviour
         BLANK, USED
     }
     public STATE myState = STATE.BLANK;
-
-    public void ConstructTower()
+    public Tower myTower = null;
+    public bool ConstructTower(TowerType type)
     {
         if (myState == STATE.BLANK)
         {
-            GameObject obj = Instantiate(Resources.Load("Prefabs/Towers/Normal"), transform) as GameObject;
+            GameObject obj = null;
+            switch(type)
+            {
+                case TowerType.Normal:
+                    obj = Instantiate(Resources.Load("Prefabs/Towers/Normal"), transform) as GameObject;
+                    break;
+                case TowerType.Ice:
+                    obj = Instantiate(Resources.Load("Prefabs/Towers/IceTower"), transform) as GameObject;
+                    break;
+            }
+            myTower = obj.GetComponent<Tower>();
+            myState = STATE.USED;
+            return true;
         }
+        return false;
+    }
+
+    public void DestroyTower()
+    {
+        Destroy(myTower.gameObject);
+        myState = STATE.BLANK;
     }
     // Start is called before the first frame update
     void Start()
     {
+        
     }
 
     // Update is called once per frame

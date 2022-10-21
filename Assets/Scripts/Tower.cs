@@ -1,51 +1,99 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
+
+public enum TowerType
+{
+    Normal, Ice
+}
 
 public class Tower : MonoBehaviour
 {
     public LayerMask attackMask;
     public Monster myTarget = null;
     public Transform myCannon = null;
-    public Transform myMuzzle = null;    
-    [SerializeField] TowerStat myStat;
-    // Start is called before the first frame update
-    void Start()
-    {
-        myStat.Initialize();
-        GetComponent<SphereCollider>().radius = myStat.Range;
-    }
+    public Transform myMuzzle = null;        
+    [SerializeField] protected TowerStat myStat;
+    [SerializeField] protected List<Monster> targetList = new List<Monster>();    
+    protected UnityAction fireAction = null;
 
-    // Update is called once per frame
-    void Update()
+    public void Upgrade()
     {
-        
+        int needGold = myStat.GetUpgradePrice();
+        if (needGold > 0 && DefenseGame.Inst.myGold >= needGold)
+        {
+            myStat.UpgradeTower();
+            DefenseGame.Inst.myGold -= needGold;
+        }
+    }
+    public void Sell()
+    {
+        DefenseGame.Inst.myGold += (int)((float)myStat.Price * 0.5f);
+        transform.parent.GetComponent<Tile>().DestroyTower();
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if(myTarget == null)
+        if (other.gameObject.layer == LayerMask.NameToLayer("Monster"))
         {
-            if((attackMask & 1 << other.gameObject.layer) != 0)
+            Monster scp = other.gameObject.GetComponent<Monster>();
+            scp.deadAlarm += () =>
             {
-                myTarget = other.gameObject.GetComponent<Monster>();
-                StartCoroutine(Attacking());
+                targetList.Remove(scp);
+                if(myTarget == scp)
+                {
+                    myTarget = FindCloseTarget();
+                }
+            };
+            if (scp != null) targetList.Add(scp);
+            if (myTarget == null)
+            {
+                if ((attackMask & 1 << other.gameObject.layer) != 0)
+                {
+                    myTarget = other.gameObject.GetComponent<Monster>();
+                    StopAllCoroutines();
+                    StartCoroutine(Attacking());
+                }
             }
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (myTarget != null)
+        if (other.gameObject.layer == LayerMask.NameToLayer("Monster"))
         {
-            if ((attackMask & 1 << other.gameObject.layer) != 0)
+            Monster scp = other.gameObject.GetComponent<Monster>();
+            if (scp != null) targetList.Remove(scp);
+
+            if (myTarget != null)
             {
-                if(myTarget.gameObject == other.gameObject)
+                if ((attackMask & 1 << other.gameObject.layer) != 0)
                 {
-                    myTarget = null;
+                    if (myTarget.gameObject == other.gameObject)
+                    {
+                        myTarget = FindCloseTarget();
+                    }
                 }
             }
         }
+    }
+
+    Monster FindCloseTarget()
+    {
+        if (targetList.Count == 0) return null;
+        int sel = 0;
+        float min = Mathf.Infinity;
+        for(int i = 0; i < targetList.Count;++i)
+        {
+            float dist = Vector3.Distance(transform.position, targetList[i].transform.position);
+            if(dist < min)
+            {
+                sel = i;
+                min = dist;
+            }
+        }
+        return targetList[sel];
     }
 
     IEnumerator Attacking()
@@ -60,9 +108,8 @@ public class Tower : MonoBehaviour
             playTime += Time.deltaTime;
             if(playTime >= myStat.Delay)
             {
-                playTime = 0.0f;
-                GameObject obj = Instantiate(Resources.Load("Prefabs/Bullet"), myMuzzle.position, myMuzzle.rotation) as GameObject;
-                obj.GetComponent<Bullet>().OnFire(myTarget.myHitPos, myStat.Damage);
+                fireAction?.Invoke();
+                playTime = 0.0f;                
             }
 
             yield return null;

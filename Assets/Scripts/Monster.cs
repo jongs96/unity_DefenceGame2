@@ -2,38 +2,107 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Events;
 
 public class Monster : CharacterProperty, IBattle
 {
-    [SerializeField] float moveSpeed = 1.0f;
-    [SerializeField] float rotSpeed = 360.0f;    
-    [SerializeField]public MonsterStat myStat;
+    float modifySpeed = 1.0f;
+    [SerializeField] float rotSpeed = 360.0f;
+    [SerializeField] MonsterStat myStat;
     NavMeshPath myPath = null;
     public Transform myHitPos;
+    UnityAction<Monster> disApear = null;
+    Vector3 myTarget = Vector3.zero;
+
+    public event UnityAction deadAlarm = null;
+
+    [SerializeField] List<DeBuff> debuffList = new List<DeBuff>();
+    void OnDisApear()
+    {
+        deadAlarm?.Invoke();
+        disApear.Invoke(this);
+        Destroy(gameObject);
+    }
+
+    public void AddDebuff(DeBuff deb)
+    {
+        for(int i = 0; i < debuffList.Count; ++i)
+        {
+            if(debuffList[i].type == deb.type)
+            {
+                DeBuff temp = debuffList[i];
+                temp.keepTime = deb.keepTime;
+                debuffList[i] = temp;
+                return;
+            }
+        }
+        switch(deb.type)
+        {
+            case DeBuffType.Slow:         
+                foreach(Renderer ren in allRenderer)
+                {
+                    ren.material.SetColor("_Color", Color.blue);
+                }                
+                modifySpeed = deb.value;
+                break;
+        }
+        debuffList.Add(deb);
+    }
+
     public void OnDamage(float dmg)
     {
         myStat.UpdateHP(-dmg);
         if(Mathf.Approximately(myStat.CurHP, 0.0f))
         {
-            Destroy(gameObject);
+            DefenseGame.Inst.myGold += myStat.Gold;
+            OnDisApear();
         }
     }
     // Start is called before the first frame update
     void Start()
-    {        
+    {
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        for(int i = 0; i < debuffList.Count;)
+        {
+            DeBuff deb = debuffList[i];
+            deb.keepTime -= Time.deltaTime;
+            if(deb.keepTime < 0.0f)
+            {
+                switch(deb.type)
+                {
+                    case DeBuffType.Slow:
+                        modifySpeed = 1.0f;
+                        foreach (Renderer ren in allRenderer)
+                        {
+                            ren.material.SetColor("_Color", Color.white);
+                        }
+                        break;
+                }
+                debuffList.RemoveAt(i);
+                continue;
+            }
+            debuffList[i] = deb;
+            ++i;
+        }
     }
 
-    public void OnActivate(Vector3 target)
+    public void SetPath()
     {
-        myPath = new NavMeshPath();
-        NavMesh.CalculatePath(transform.position, target, NavMesh.AllAreas, myPath);
+        StopAllCoroutines();       
+        NavMesh.CalculatePath(transform.position, myTarget, NavMesh.AllAreas, myPath);
         StartCoroutine(MovingByPath(myPath.corners));
+    }
+
+    public void OnActivate(Vector3 target, UnityAction<Monster> dis)
+    {
+        disApear = dis;
+        myTarget = target;
+        myPath = new NavMeshPath();
+        SetPath();
     }
 
     IEnumerator MovingByPath(Vector3[] poslist)
@@ -46,7 +115,7 @@ public class Monster : CharacterProperty, IBattle
             yield return StartCoroutine(MovingToPosition(poslist[targetPos++]));
         }
         myAnim.SetBool("Run Forward", false);
-        Destroy(gameObject);
+        OnDisApear();
     }
 
     IEnumerator MovingToPosition(Vector3 pos)
@@ -59,7 +128,7 @@ public class Monster : CharacterProperty, IBattle
 
         while(dist > Mathf.Epsilon)
         {
-            float delta = moveSpeed * Time.deltaTime;
+            float delta = myStat.MoveSpeed * modifySpeed * Time.deltaTime;
             if(delta > dist)
             {
                 delta = dist;
@@ -69,7 +138,7 @@ public class Monster : CharacterProperty, IBattle
             yield return null;
         }
 
-        StopCoroutine(rot);
+        if(rot != null) StopCoroutine(rot);
     }
 
     IEnumerator RotatingToDirection(Vector3 dir)

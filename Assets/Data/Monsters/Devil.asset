@@ -9,8 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c47884a6adec7746aaabeec9a9f3897, type: 3}
+  m_Script: {fileID: 11500000, guid: 641ee71a1170835409b1a6729f4cc9ea, type: 3}
   m_Name: Devil
   m_EditorClassIdentifier: 
   MaxHp: 20
   MoveSpeed: 1
+  gold: 10
